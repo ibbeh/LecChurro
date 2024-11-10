@@ -1,0 +1,29 @@
+**Question 1:**
+What is the first step in applying trigonometric substitution to simplify the integral of 1/(x^2 - 8x + 1)?
+
+A) Selecting the appropriate trigonometric function substitution  
+B) Drawing a triangle to relate the variables x and theta  
+C) Finding the corresponding differential term  
+D) Rewriting the function using completing the square  
+
+**Answer:** D) Rewriting the function using completing the square
+
+**Question 2:**
+Which trigonometric identities may be used when simplifying the integral with trigonometric substitution?
+
+A) Sine and cosine  
+B) Secant, tangent, and cosecant  
+C) Tangent and cotangent  
+D) Cosine and secant  
+
+**Answer:** B) Secant, tangent, and cosecant
+
+**Question 3:**
+In trigonometric substitution, what is the purpose of drawing a triangle to relate the variables x and theta?
+
+A) To confuse students  
+B) To visualize the integration process  
+C) To simplify the calculation of the integral  
+D) To complicate the problem further  
+
+**Answer:** C) To simplify the calculation of the integral

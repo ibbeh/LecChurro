@@ -1,0 +1,43 @@
+**Grade Level:** High School or College
+
+**Number of Questions:** 5
+
+1. **Question:** What is the complex conjugate of a complex number z = a + bi?
+   - A) a + bi
+   - B) a - bi
+   - C) -a + bi
+   - D) -a - bi
+
+   **Answer:** B) a - bi
+
+2. **Question:** In quantum mechanics, why must the wave function psi be a complex number?
+   - A) To simplify calculations
+   - B) To introduce uncertainty
+   - C) To avoid contradictions
+   - D) To increase energy levels
+
+   **Answer:** C) To avoid contradictions
+
+3. **Question:** What is the norm squared of a complex number z = a + bi represented as?
+   - A) a^2 - b^2
+   - B) a^2 + b^2
+   - C) 2ab
+   - D) (a + bi)^2
+
+   **Answer:** B) a^2 + b^2
+
+4. **Question:** What discovery by Max Born provided a basis for interpreting probabilities in quantum mechanics?
+   - A) Calculating the real part of wave functions
+   - B) Calculating the imaginary part of wave functions
+   - C) Calculating the norm squared of wave functions
+   - D) Calculating the complex conjugate of wave functions
+
+   **Answer:** C) Calculating the norm squared of wave functions
+
+5. **Question:** Which physicist initially had skepticism about the importance of complex numbers in quantum mechanics?
+   - A) Max Born
+   - B) Erwin Schrödinger
+   - C) Albert Einstein
+   - D) Niels Bohr
+
+   **Answer:** B) Erwin Schrödinger

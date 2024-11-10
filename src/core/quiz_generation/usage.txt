@@ -1,0 +1,1 @@
+python .\quiz_generation_transcription.py .\quiz_generation_prompt_multiple_choice.txt ..\summarization\summaries\Integration_by_completing_the_square_summary.txt .\quizzes\Integration_by_completing_the_square_multiple_choice.txt
