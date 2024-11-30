@@ -1,1 +1,9 @@
-{\rtf1}
+gradio
+ffmpeg-python
+openai
+whisper
+openai-whisper
+faster-whisper
+python-dotenv
+torch
+pandas
