@@ -1,9 +1,9 @@
 import os
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 from openai import OpenAI
 
 # Load environment variables from .env file
-load_dotenv()
+#load_dotenv()
 
 # Initialize OpenAI client with the API key
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -13,7 +13,7 @@ def load_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         return file.read()
 
-def summarize_lecture(prompt_file, transcription_file, output_file, model="gpt-3.5-turbo"):
+def summarize_lecture(prompt_file, transcription_file, output_file, model="gpt-4-turbo"):
     # Load the prompt template and transcription text
     prompt_template = load_file(prompt_file)
     transcription = load_file(transcription_file)
