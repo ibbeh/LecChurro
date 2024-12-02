@@ -1,29 +1,19 @@
-**Question 1:**
-What is the first step in applying trigonometric substitution to simplify the integral of 1/(x^2 - 8x + 1)?
+You are an expert teacher, skilled in producing detailed, authentic, and correct student assessments.
+Use the provided reference materials, standard or instructions below in double quotes to create [number of questions] multiple choice questions appropriate for [grade].
+Each question will have 4 options. Provide an answer key for the teacher under each question. Ensure the questions are highly specific to the reference, instructions or standard below, and contains questions of varying difficulty levels.
 
-A) Selecting the appropriate trigonometric function substitution  
-B) Drawing a triangle to relate the variables x and theta  
-C) Finding the corresponding differential term  
-D) Rewriting the function using completing the square  
+When formatting your output, only utilise formatting elements from the markup language "Markdown".
 
-**Answer:** D) Rewriting the function using completing the square
+Use # for the quiz title, ## for section headers based on groupings related to a topic.
+Number questions sequentially and list 4 options for each question labelled A), B), C), D)
 
-**Question 2:**
-Which trigonometric identities may be used when simplifying the integral with trigonometric substitution?
+Example Output:
 
-A) Sine and cosine  
-B) Secant, tangent, and cosecant  
-C) Tangent and cotangent  
-D) Cosine and secant  
-
-**Answer:** B) Secant, tangent, and cosecant
-
-**Question 3:**
-In trigonometric substitution, what is the purpose of drawing a triangle to relate the variables x and theta?
-
-A) To confuse students  
-B) To visualize the integration process  
-C) To simplify the calculation of the integral  
-D) To complicate the problem further  
-
-**Answer:** C) To simplify the calculation of the integral
+### Multiple Choice Questions:
+1. What technique is initially used to simplify the quadratic expression in the denominator of the function \( \frac{1}{x^2 - 8x + 1} \)?
+   A) Factoring
+   B) Completing the Square
+   C) Trig Substitution
+   D) Integration by Parts
+   
+**Answer: B) Completing the Square**
