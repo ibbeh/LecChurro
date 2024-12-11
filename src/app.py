@@ -156,7 +156,7 @@ def main():
 
         with gr.Tabs():
             with gr.Tab("Summary/Notes"):
-                summary_output = gr.HTML(label="Summary/Notes")
+                summary_output = gr.Markdown(label="Summary/Notes")
             with gr.Tab("Timestamps"):
                 timestamps_output = gr.HTML(label="Timestamps")
             with gr.Tab("Quizzes"):

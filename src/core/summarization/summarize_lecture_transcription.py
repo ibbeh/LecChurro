@@ -13,7 +13,7 @@ def load_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         return file.read()
 
-def summarize_lecture(prompt_file, transcription_file, output_file, model="gpt-4-turbo"):
+def summarize_lecture(prompt_file, transcription_file, output_file, model="gpt-4-32k"):
     # Load the prompt template and transcription text
     prompt_template = load_file(prompt_file)
     transcription = load_file(transcription_file)
@@ -28,13 +28,21 @@ def summarize_lecture(prompt_file, transcription_file, output_file, model="gpt-4
             {"role": "system", "content": "You are an AI assistant that helps summarize lecture notes."},
             {"role": "user", "content": prompt}
         ],
-        max_tokens=1000,
+        max_tokens=32000,
         temperature=0.5
     )
+
+    # Log the model being used
+    print(f"Model used: {completion['model']}")
 
     # Extract the summary from the response
     summary = completion.choices[0].message.content.strip()
 
+    # Save the summary to a new .txt file in the current directory
+    output_txt_file = "gpt_output.txt"
+    with open(output_txt_file, "w", encoding="utf-8") as txt_file:
+        txt_file.write(summary)
+    print(f"API output saved to {output_txt_file}")
 
     # Save the summary to the output file
     with open(output_file, "w", encoding="utf-8") as file:

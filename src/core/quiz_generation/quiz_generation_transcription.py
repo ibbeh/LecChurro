@@ -38,7 +38,7 @@ def generate_quiz(transcription_text):
                 {"role": "system", "content": "You are an expert teacher skilled in producing detailed and correct student assessments."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=1000,
+            max_tokens=4000,
             temperature=0.7,
         )
         quiz = response.choices[0].message.content.strip()
