@@ -25,17 +25,17 @@ def transcribe_audio_files():
             audio_path = os.path.join(AUDIO_DIR, filename)
             
             # Perform transcription
-            print(f"Transcribing {filename}...")
+            #print(f"Transcribing {filename}...")
             segments, info = model.transcribe(audio_path, beam_size=5)
             df = pd.DataFrame(segments)
-            print(list(df))
+            #print(list(df))
             
             # Save transcription to a .txt file with the same name in TEXT_DIR
             text_filename = os.path.splitext(filename)[0] + ".txt"
             text_path = os.path.join(TEXT_DIR, text_filename)
             df.to_csv(text_path)
             
-            print(f"Saved transcription to {text_path}")
+            #print(f"Saved transcription to {text_path}")
 
 if __name__ == "__main__":
    transcribe_audio_files()
