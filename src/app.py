@@ -5,6 +5,10 @@ import gradio as gr
 import ffmpeg
 import whisper
 import openai
+import warnings
+
+warnings.filterwarnings("ignore", message="FP16 is not supported on CPU; using FP32 instead")
+warnings.filterwarnings("ignore", message="You are using ⁠ torch.load ⁠ with ⁠ weights_only=False ⁠")
 
 # Set the environment variable to allow duplicate OpenMP runtimes (temporary workaround)
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -63,40 +67,54 @@ def transcribe_audio(audio_file_path):
     return transcription, segments
 
 def process_video(video_file):
-    """
-    Process the uploaded video: extract audio, transcribe, summarize, generate quizzes.
-    """
+    print(f"Processing video file: {video_file}")
+
     # Save video file to VIDEO_DIR
     video_filename = os.path.basename(video_file)
     video_path = os.path.join(VIDEO_DIR, video_filename)
     shutil.copy(video_file, video_path)
+    print(f"Video saved to: {video_path}")
 
     # Extract audio
     audio_filename = os.path.splitext(video_filename)[0] + ".wav"
     audio_path = os.path.join(AUDIO_DIR, audio_filename)
     success = extract_audio(video_path, audio_path)
     if not success:
+        print(f"Audio extraction failed for: {video_path}")
         return "Error extracting audio.", None, None, None, None
+    print(f"Audio extracted to: {audio_path}")
 
     # Transcribe audio
     transcription, segments = transcribe_audio(audio_path)
+    print(f"Transcription: {transcription[:100]}...")  # Limit to first 100 characters
+    print(f"Segments: {segments[:3]}...")  # Limit to first 3 segments
 
-    # Save transcription
-    transcription_filename = os.path.splitext(video_filename)[0] + ".txt"
-    transcription_path = os.path.join(TEXT_DIR, transcription_filename)
-    with open(transcription_path, "w", encoding="utf-8") as f:
-        f.write(transcription)
-
-    # Generate a comprehensive summary using the entire transcription
-    summary = summarize_text(transcription, segments)
+    # Summarize transcription
+    try:
+        summary = summarize_text(transcription, segments)
+        print(f"Summary generated: {summary[:100]}...")
+    except Exception as e:
+        print(f"Error in summarizing text: {e}")
+        summary = None
 
     # Generate quizzes
-    quizzes = generate_quiz(transcription)
+    try:
+        quizzes = generate_quiz(transcription)
+        print(f"Quizzes generated: {quizzes[:100]}...")
+    except Exception as e:
+        print(f"Error in generating quizzes: {e}")
+        quizzes = None
 
     # Generate flashcards
-    flashcards = generate_flashcards(transcription)
+    try:
+        flashcards = generate_flashcards(transcription)
+        print(f"Flashcards generated: {flashcards[:100]}...")
+    except Exception as e:
+        print(f"Error in generating flashcards: {e}")
+        flashcards = None
 
     return video_path, summary, segments, quizzes, flashcards
+
 
 def format_timestamps(segments):
     """
@@ -180,7 +198,7 @@ def main():
             outputs=[video_input, summary_output, timestamps_output, quiz_output, flashcards_output]
         )
 
-    demo.launch()
+    demo.launch(allowed_paths=[VIDEO_DIR, AUDIO_DIR, TEXT_DIR])
 
 if __name__ == "__main__":
     main()

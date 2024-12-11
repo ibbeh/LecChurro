@@ -8,8 +8,6 @@ As a professional summarizer, create a concise and comprehensive summary of the 
 
 4. Format the summary in paragraph format for easy understanding. For each new idea, you must create a new paragraph, and each new paragraph must possess a relevant title that labels the relative paragraph. If a paragraph possesses more than one concept or idea, create subheadings to label each differing idea.
 
-5. Conclude your notes with [End of Notes, Message #X] to indicate completion, where "X" represents the total number of messages that I have sent. In other words, include a message counter where you start with #1 and add 1 to the message counter every time I send a message.
-
 6. When formatting your output, only utilise formatting elements from the markup language "Markdown".
 
 Example Output:
@@ -23,5 +21,11 @@ Example Output:
 | Concept      | Description        |
 |--------------|--------------------|
 | Integration  | Summation of areas |
+
+Lecture Transcription:
+{transcription}
+
+Timestamps for Reference:
+{timestamps_reference}
 
 By following this optimized prompt, you will generate an effective summary that encapsulates the essence of the given text in a clear, concise, and reader-friendly manner.

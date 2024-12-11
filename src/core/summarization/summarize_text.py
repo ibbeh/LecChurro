@@ -35,25 +35,16 @@ def summarize_text(transcription, segments):
     # Creating a reference for the AI to use timestamps
     timestamps_reference = "\n".join(major_segments)
 
-    prompt = f"""
-    You are an AI assistant that helps students learn by summarizing lecture content.
-    
-    Summarize the following lecture transcription in a clear, concise format that highlights key points, main topics, and important details.
-    Focus on the following:
-    1. Identify and list main topics covered.
-    2. Highlight key points and essential details for each topic.
-    3. Simplify complex information for easy understanding.
-    4. Provide an overview of the lecture structure.
-    5. Include the timestamps for the main topics.
+    # Construct the relative path for the prompt file
+    current_dir = os.path.dirname(os.path.abspath(__file__))  # Get the directory of this script
+    prompt_file_path = os.path.join(current_dir, 'summarization_prompt2.txt')  # Combine directory with the file name
 
-    Use bullet points or short paragraphs to organize the summary. Avoid overly technical jargon and make it student-friendly.
-    
-    Lecture Transcription:
-    "{transcription}"
+    # Read the prompt from the file
+    with open(prompt_file_path, 'r') as file:
+        prompt_template = file.read()
 
-    Timestamps for Reference:
-    {timestamps_reference}
-    """
+    # Format the prompt with the transcription and timestamps
+    prompt = prompt_template.format(transcription=transcription, timestamps_reference=timestamps_reference)
 
     # Send the prompt to the GPT API for summarization
     response = client.chat.completions.create(

@@ -11,29 +11,38 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def generate_quiz(transcription_text):
-    prompt = f"""
-    Based on the following lecture transcription, generate a set of quiz questions including:
+    # Construct the relative path for the quiz prompt file
+    current_dir = os.path.dirname(os.path.abspath(__file__))  # Get the directory of this script
+    prompt_file_path = os.path.join(current_dir, 'quiz_generation_prompt_multiple_choice.txt')  # Combine directory with the file name
 
-    - Multiple-choice questions (provide 4 options each)
-    - True or False questions
-    - Matching questions
+    # Read the prompt from the file
+    with open(prompt_file_path, 'r') as file:
+        prompt_template = file.read()
 
-    Ensure the questions cover key concepts and vary in difficulty.
+    # Debugging: Print the template content
+    print(f"Prompt Template: {prompt_template}")
 
-    Lecture Transcription:
-    "{transcription_text}"
+    # Format the prompt with the transcription text
+    try:
+        prompt = prompt_template.format(transcription_text=transcription_text)
+        print(f"Formatted Prompt: {prompt}")  # Debugging
+    except KeyError as e:
+        print(f"Formatting error: {e}")
+        raise
 
-    Provide the questions followed by the answers.
-    """
-
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are an expert teacher skilled in producing detailed and correct student assessments."},
-            {"role": "user", "content": prompt}
-        ],
-        max_tokens=1000,
-        temperature=0.7,
-    )
-    quiz = response.choices[0].message.content.strip()
-    return quiz
+    # Send the formatted prompt to the OpenAI API
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are an expert teacher skilled in producing detailed and correct student assessments."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=1000,
+            temperature=0.7,
+        )
+        quiz = response.choices[0].message.content.strip()
+        return quiz
+    except Exception as e:
+        print(f"Error in OpenAI API call: {e}")
+        raise
