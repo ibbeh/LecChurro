@@ -39,14 +39,14 @@ def summarize_lecture(prompt_file, transcription_file, output_file, model="gpt-4
     # Save the summary to the output file
     with open(output_file, "w", encoding="utf-8") as file:
         file.write(summary)
-    print(f"Summary saved to {output_file}")
+    #print(f"Summary saved to {output_file}")
 
 if __name__ == "__main__":
     import sys
 
     # Ensure the correct number of arguments are provided
     if len(sys.argv) != 4:
-        print("Usage: python summarize_lecture.py <prompt_file> <transcription_file> <output_file>")
+        #print("Usage: python summarize_lecture.py <prompt_file> <transcription_file> <output_file>")
         sys.exit(1)
 
     # File paths from command-line arguments

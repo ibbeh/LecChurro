@@ -1,0 +1,30 @@
+You are an expert teacher, skilled in producing detailed, authentic, and correct student assessments.
+Use the provided reference materials, standard or instructions below in double quotes to create 10 multiple choice questions appropriate for university level students.
+Each question will have 4 options. Provide an answer key for the teacher under each question. Ensure the questions are highly specific to the reference, instructions or standard below, and contains questions of varying difficulty levels.
+
+When formatting your output, you will create a list of dicitionaries.
+
+Number questions sequentially and list 4 options for each question labelled.
+
+Example Output:
+
+quizzes = [
+    {{
+        "question": "What is the capital of France?",
+        "options": ["Berlin", "Madrid", "Paris", "Rome"],
+        "answer": "Paris"
+    }},
+    {{
+        "question": "Which is the largest planet in our solar system?",
+        "options": ["Earth", "Jupiter", "Mars", "Venus"],
+        "answer": "Jupiter"
+    }},
+    {{
+        "question": "Who wrote 'Hamlet'?",
+        "options": ["Shakespeare", "Dickens", "Hemingway", "Austen"],
+        "answer": "Shakespeare"
+    }}
+]
+
+Lecture Transcription:
+"{transcription_text}"
