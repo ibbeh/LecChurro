@@ -1,5 +1,3 @@
-# src/core/quiz_generation/quiz_generation_transcription.py
-
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -16,33 +14,21 @@ def generate_quiz(transcription_text):
     prompt_file_path = os.path.join(current_dir, 'quiz_generation_json.txt')  # Combine directory with the file name
 
     # Read the prompt from the file
-    with open(prompt_file_path, 'r') as file:
+    with open(prompt_file_path, 'r', encoding='utf-8') as file:
         prompt_template = file.read()
 
-    # Debugging: #print the template content
-    #print(f"Prompt Template: {prompt_template}")
-
-    # Format the prompt with the transcription text
-    try:
-        prompt = prompt_template.format(transcription_text=transcription_text)
-        #print(f"Formatted Prompt: {prompt}")  # Debugging
-    except KeyError as e:
-        #print(f"Formatting error: {e}")
-        raise
+    # Replace the placeholder with the actual transcription
+    prompt = prompt_template.replace("TRANSCRIPTION_HERE", transcription_text)
 
     # Send the formatted prompt to the OpenAI API
-    try:
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are an expert teacher skilled in producing detailed and correct student assessments."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=4000,
-            temperature=0.7,
-        )
-        quiz = response.choices[0].message.content.strip()
-        return quiz
-    except Exception as e:
-        #print(f"Error in OpenAI API call: {e}")
-        raise
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": "You are an expert teacher skilled in producing detailed and correct student assessments."},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=14000,
+        temperature=0.7,
+    )
+    quiz = response.choices[0].message.content.strip()
+    return quiz

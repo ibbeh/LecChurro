@@ -27,7 +27,7 @@ def generate_conceptual_timestamps(transcription, segments):
                 {"role": "system", "content": "You are a helpful assistant that outputs only the requested data."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=3000,
+            max_tokens=1500,
             temperature=0.7,
         )
         concept_groups_raw = response.choices[0].message.content.strip()

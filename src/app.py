@@ -6,22 +6,20 @@ import ffmpeg
 import whisper
 import openai
 import warnings
-import json
 import traceback
+import json
+import re
 
 warnings.filterwarnings("ignore", message="FP16 is not supported on CPU; using FP32 instead")
 warnings.filterwarnings("ignore", message="You are using torch.load with weights_only=False")
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
-# Load environment variables from .env file
 from dotenv import load_dotenv
 load_dotenv()
 
-# Set OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Import existing functions
 from core.summarization.summarize_text import summarize_text
 from core.quiz_generation.quiz_generation_transcription import generate_quiz
 from core.flashcards.flashcards_generation import generate_flashcards
@@ -30,12 +28,9 @@ from core.timestamps.generate_conceptual_timestamps import generate_conceptual_t
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 DATA_DIR = os.path.join(ROOT_DIR, 'data')
 AUDIO_DIR = os.path.join(DATA_DIR, 'audio')
-TEXT_DIR = os.path.join(DATA_DIR, 'text_timestamps')
+TEXT_DIR = os.path.join(ROOT_DIR, 'data', 'text_timestamps')
 VIDEO_DIR = os.path.join(DATA_DIR, 'video')
-TRANSCRIPTION = ""
 
-
-# Ensure directories exist
 os.makedirs(AUDIO_DIR, exist_ok=True)
 os.makedirs(TEXT_DIR, exist_ok=True)
 os.makedirs(VIDEO_DIR, exist_ok=True)
@@ -44,6 +39,7 @@ print("Loading Whisper model...")
 whisper_model = whisper.load_model("base")
 print("Whisper model loaded.")
 
+MAX_QUESTIONS = 50  # You can adjust this as needed
 
 def extract_audio(video_file_path, audio_file_path):
     print("Extracting audio with ffmpeg...")
@@ -58,25 +54,20 @@ def extract_audio(video_file_path, audio_file_path):
         print("Audio extraction successful.")
         return True
     except Exception as e:
-        #print(f"Error extracting audio: {e}")
+        print(f"Error extracting audio: {e}")
+        traceback.print_exc()
         return False
-
 
 def transcribe_audio(audio_file_path):
     print("Transcribing audio with Whisper...")
     result = whisper_model.transcribe(audio_file_path)
     transcription = result["text"]
-    TRANSCRIPTION = transcription
     segments = result["segments"]
     print("Transcription complete.")
     return transcription, segments
 
-
 def process_video(video_file):
     print(f"Processing video file: {video_file}")
-    # The user's working version assumed video_file is a file path directly.
-    # According to the working code, video_file is already a file path (string),
-    # not a dict. We'll assume that remains true.
     if not video_file or not os.path.isfile(video_file):
         print("Invalid video file path.")
         return "Error extracting audio.", None, None, None, None
@@ -84,13 +75,13 @@ def process_video(video_file):
     video_filename = os.path.basename(video_file)
     video_path = os.path.join(VIDEO_DIR, video_filename)
     shutil.copy(video_file, video_path)
+    print(f"Video saved to: {video_path}")
 
     audio_filename = os.path.splitext(video_filename)[0] + ".wav"
     audio_path = os.path.join(AUDIO_DIR, audio_filename)
     success = extract_audio(video_path, audio_path)
     if not success:
         return "Error extracting audio.", None, None, None, None
-  
 
     try:
         transcription, segments = transcribe_audio(audio_path)
@@ -110,19 +101,21 @@ def process_video(video_file):
         summary = None
 
     try:
-        quizzes = generate_quiz(transcription)
-        print(f"Quiz generated snippet: {quizzes[:100]}...")
+        quizzes_str = generate_quiz(transcription)
+        print(f"Quiz generated snippet: {quizzes_str[:100]}...")
+        match = re.search(r"quizzes\s*=\s*(\[.*\])", quizzes_str, flags=re.DOTALL)
+        if match:
+            quizzes_json_str = match.group(1)
+            quizzes = json.loads(quizzes_json_str)
+        else:
+            quizzes = []
     except Exception as e:
-        print(f"Error in generating quizzes: {e}")
+        print(f"Error parsing quizzes: {e}")
         traceback.print_exc()
         quizzes = None
 
     try:
         flashcards = generate_flashcards(transcription)
-        #print(f"Flashcards generated: {flashcards[:100]}...")
-    except Exception as e:
-        #print(f"Error in generating flashcards: {e}")
-        print(f"Flashcards generated snippet: {flashcards[:100]}...")
     except Exception as e:
         print(f"Error in generating flashcards: {e}")
         traceback.print_exc()
@@ -130,25 +123,18 @@ def process_video(video_file):
 
     return video_path, summary, segments, quizzes, flashcards
 
-
-
 def format_timestamps(segments):
-    """
-    Format timestamps data for display and make them clickable.
-    """
     timestamps_data = []
     for segment in segments:
         start = segment["start"]
         end = segment["end"]
         text = segment["text"]
-        # Create clickable text
         clickable_text = f"<a href='javascript:void(0);' onclick='seekVideo({start});'>{text}</a>"
         timestamps_data.append({"Start Time": start, "End Time": end, "Text": clickable_text})
     return timestamps_data
-def format_flashcards_html(flashcards_text):
-    # Parse flashcards in the format:
-    # Front: ...
-    # Back: ...
+
+def format_flashcards_markdown(flashcards_text):
+    # Parse the flashcards into Front and Back pairs
     cards = flashcards_text.strip().split('\n')
     flashcards_list = []
     current_front = None
@@ -157,39 +143,31 @@ def format_flashcards_html(flashcards_text):
     for line in cards:
         line = line.strip()
         if line.lower().startswith("front:"):
-            current_front = line[len("Front:"):].strip()
+            current_front = line[len("front:"):].strip()
         elif line.lower().startswith("back:"):
-            current_back = line[len("Back:"):].strip()
+            current_back = line[len("back:"):].strip()
             if current_front and current_back:
                 flashcards_list.append((current_front, current_back))
                 current_front = None
                 current_back = None
 
-    html = ""
-    # Build flip-card-like behavior using Show/Hide
-    for front, back in flashcards_list:
-        html += f"""
-        <div class="flashcard" style="margin-bottom:20px; border:1px solid #ccc; padding:10px; width:300px;">
-          <div class="front"><b>Front:</b> {front}</div>
-          <div class="back" style="display:none; margin-top:10px;"><b>Back:</b> {back}</div>
-          <button class="toggle-answer" style="margin-top:10px;">Show Answer</button>
-        </div>
-        """
-    return html
+    if not flashcards_list:
+        return "No flashcards generated."
 
+    # Create Markdown with <details> and <summary> for interactive flashcards
+    md = "## Flashcards\n\n"
+    for i, (front, back) in enumerate(flashcards_list, start=1):
+        md += f"""
+<details style="background-color: #f0f8ff; padding: 10px; border-radius: 5px;">
+<summary><span style="font-size: 20px; font-weight: bold; cursor: pointer;">Flashcard {i}:</span> <span style="font-size: 18px;">{front}</span></summary>
 
-def generate_gradio_quiz(quizzes):
-    # Create a list of quiz question components
-    quiz_elements = []
+<p style="font-size: 16px; margin-top: 10px;"><b>Answer:</b> {back}</p>
 
-    for idx, question in enumerate(quizzes):
-        #question = json.loads(question)
-        # Create a column for each question with a heading and dropdown
-        quiz_elements.append(gr.Markdown(f"### {question['question']}"))  # Add question as heading
-        quiz_elements.append(gr.Dropdown(choices=question['options'], label=f"Choose an option for question {idx + 1}", interactive=True))
+</details>
 
-    return quiz_elements
-
+<br>
+"""
+    return md
 
 
 def main():
@@ -198,71 +176,8 @@ def main():
 
         with gr.Row():
             with gr.Column(scale=1):
-                # Keep it as in the working version: just a Video component
                 video_input = gr.Video(label="Upload Lecture Video", elem_id="main_video_player")
                 transcribe_button = gr.Button("Transcribe Now")
-        
-        # Function to capture the answers after the user selects an option
-        def capture_answers(*answers):
-            
-            quizzes = [
-                    {
-                        "question": "What type of cell division results in four daughter cells with half the number of chromosomes as the parent cell?",
-                        "options": ["Mitosis", "Meiosis", "Binary fission", "Budding"],
-                        "answer": "Meiosis"
-                    },
-                    {
-                        "question": "Which of the following is NOT a phase of mitosis?",
-                        "options": ["Prophase", "Metaphase", "Anaphase", "Telophase"],
-                        "answer": "Meiosis"
-                    },
-                    {
-                        "question": "During which phase of meiosis do homologous chromosomes pair up and exchange genetic material?",
-                        "options": ["Prophase I", "Metaphase I", "Anaphase I", "Telophase I"],
-                        "answer": "Prophase I"
-                    },
-                    {
-                        "question": "What is the end result of meiosis in humans?",
-                        "options": ["2 diploid cells", "4 haploid cells", "4 diploid cells", "2 haploid cells"],
-                        "answer": "4 haploid cells"
-                    },
-                    {
-                        "question": "Which of the following is responsible for genetic diversity in sexually reproducing organisms?",
-                        "options": ["Mitosis", "Binary fission", "Meiosis", "Budding"],
-                        "answer": "Meiosis"
-                    },
-                    {
-                        "question": "What is the purpose of meiosis in multicellular organisms?",
-                        "options": ["Growth and repair", "Asexual reproduction", "Increase genetic diversity", "Production of gametes"],
-                        "answer": "Production of gametes"
-                    },
-                    {
-                        "question": "Which stage of meiosis ensures that each daughter cell receives a complete set of chromosomes?",
-                        "options": ["Prophase I", "Metaphase I", "Anaphase I", "Telophase I"],
-                        "answer": "Anaphase I"
-                    },
-                    {
-                        "question": "In meiosis, sister chromatids separate during which phase?",
-                        "options": ["Prophase I", "Anaphase I", "Prophase II", "Anaphase II"],
-                        "answer": "Anaphase II"
-                    },
-                    {
-                        "question": "What is the significance of crossing over during meiosis?",
-                        "options": ["Formation of gametes", "Increase genetic variation", "Creation of identical daughter cells", "Asexual reproduction"],
-                        "answer": "Increase genetic variation"
-                    },
-                    {
-                        "question": "Which of the following events occurs during meiosis but not during mitosis?",
-                        "options": ["Synapsis", "Cytokinesis", "Chromatid separation", "Formation of spindle fibers"],
-                        "answer": "Synapsis"
-                    }
-                ]
-            result = []
-            for idx, (answer, quiz) in enumerate(zip(answers, quizzes)):
-                correct = "Correct!" if answer == quiz["answer"] else "Incorrect"
-                result.append(f"Question {idx + 1}: {correct}")
-            
-            return "\n".join(result)  # Return results for display
 
         with gr.Tabs():
             with gr.Tab("Summary/Notes"):
@@ -270,169 +185,114 @@ def main():
             with gr.Tab("Timestamps"):
                 timestamps_output = gr.HTML(label="Timestamps")
             with gr.Tab("Quizzes"):
-                # Generate list of dropdowns from JSON
-                quizzes =generate_quiz(TRANSCRIPTION)
-
-                quizzes = [
-                    {
-                        "question": "What type of cell division results in four daughter cells with half the number of chromosomes as the parent cell?",
-                        "options": ["Mitosis", "Meiosis", "Binary fission", "Budding"],
-                        "answer": "Meiosis"
-                    },
-                    {
-                        "question": "Which of the following is NOT a phase of mitosis?",
-                        "options": ["Prophase", "Metaphase", "Anaphase", "Telophase"],
-                        "answer": "Meiosis"
-                    },
-                    {
-                        "question": "During which phase of meiosis do homologous chromosomes pair up and exchange genetic material?",
-                        "options": ["Prophase I", "Metaphase I", "Anaphase I", "Telophase I"],
-                        "answer": "Prophase I"
-                    },
-                    {
-                        "question": "What is the end result of meiosis in humans?",
-                        "options": ["2 diploid cells", "4 haploid cells", "4 diploid cells", "2 haploid cells"],
-                        "answer": "4 haploid cells"
-                    },
-                    {
-                        "question": "Which of the following is responsible for genetic diversity in sexually reproducing organisms?",
-                        "options": ["Mitosis", "Binary fission", "Meiosis", "Budding"],
-                        "answer": "Meiosis"
-                    },
-                    {
-                        "question": "What is the purpose of meiosis in multicellular organisms?",
-                        "options": ["Growth and repair", "Asexual reproduction", "Increase genetic diversity", "Production of gametes"],
-                        "answer": "Production of gametes"
-                    },
-                    {
-                        "question": "Which stage of meiosis ensures that each daughter cell receives a complete set of chromosomes?",
-                        "options": ["Prophase I", "Metaphase I", "Anaphase I", "Telophase I"],
-                        "answer": "Anaphase I"
-                    },
-                    {
-                        "question": "In meiosis, sister chromatids separate during which phase?",
-                        "options": ["Prophase I", "Anaphase I", "Prophase II", "Anaphase II"],
-                        "answer": "Anaphase II"
-                    },
-                    {
-                        "question": "What is the significance of crossing over during meiosis?",
-                        "options": ["Formation of gametes", "Increase genetic variation", "Creation of identical daughter cells", "Asexual reproduction"],
-                        "answer": "Increase genetic variation"
-                    },
-                    {
-                        "question": "Which of the following events occurs during meiosis but not during mitosis?",
-                        "options": ["Synapsis", "Cytokinesis", "Chromatid separation", "Formation of spindle fibers"],
-                        "answer": "Synapsis"
-                    }
-                ]
-                dropdowns = generate_gradio_quiz(quizzes)
-                
-                # Render all dropdowns in a single column
-                quiz_output = gr.Column(*dropdowns)
-                
-                # Collect answers and show selected answers in the textbox
-                answer_output = gr.Textbox(label="Selected Answers")
-                
-                # Listen for changes in the dropdowns and call capture_answers
-                gr.Button("Submit").click(
-                    capture_answers,  # Function to handle selection
-                    inputs=dropdowns,  # Pass list of dropdowns as inputs
-                    outputs=answer_output
-                )
-
+                quiz_output = gr.HTML(label="Quizzes")
+                quiz_radios = []
+                for i in range(MAX_QUESTIONS):
+                    r = gr.Radio(choices=[], label=f"Q{i+1}", visible=False)
+                    quiz_radios.append(r)
+                submit_quiz_button = gr.Button("Submit Quiz", visible=False)
+                quiz_feedback = gr.Markdown("", visible=False)
             with gr.Tab("Flashcards"):
-                flashcards_output = gr.HTML(label="Flashcards")
+                # Use Markdown to display interactive flashcards
+                flashcards_output = gr.Markdown(label="Flashcards")
+
+        quizzes_state = gr.State()
 
         def on_transcribe(video_file):
-            # According to the working code, video_file is a file path directly
-            # If gr.Video returns a dict, we handle that:
-            # If previously working code was that video_file = None means no file,
-            # we keep same logic:
             if video_file is None:
-                return gr.update(), "Please upload a video file.", "", "", ""
+                return (gr.update(), "Please upload a video file.", "", "", "",
+                        *([gr.update(visible=False)]*MAX_QUESTIONS),
+                        gr.update(visible=False),
+                        gr.update(visible=False),
+                        [])
 
-            # If video_file is a dict from gr.Video, extract 'name'
             if isinstance(video_file, dict) and "name" in video_file:
                 video_file_path = video_file["name"]
             else:
-                # If it's already a string path (the user said it worked before),
-                # just use it directly
                 video_file_path = video_file if isinstance(video_file, str) else None
 
             if not video_file_path or not os.path.isfile(video_file_path):
-                return gr.update(), "Please upload a video file.", "", "", ""
+                return (gr.update(), "Please upload a video file.", "", "", "",
+                        *([gr.update(visible=False)]*MAX_QUESTIONS),
+                        gr.update(visible=False),
+                        gr.update(visible=False),
+                        [])
 
             try:
                 video_path, summary, segments, quizzes, flashcards = process_video(video_file_path)
             except Exception as e:
                 print("Error during process_video call:")
                 traceback.print_exc()
-                return gr.update(), f"Error processing video: {e}", "", "", ""
+                return (gr.update(), f"Error processing video: {e}", "", "", "",
+                        *([gr.update(visible=False)]*MAX_QUESTIONS),
+                        gr.update(visible=False),
+                        gr.update(visible=False),
+                        [])
 
-            print("Generating conceptual timestamps...")
-            timestamps_html = generate_conceptual_timestamps(summary, segments)
-            print("Conceptual timestamps generated successfully.")
-
-            quiz_html = f"<pre>{quizzes}</pre>" if quizzes else "<p>No quizzes generated.</p>"
-
-            if flashcards:
-                flashcards_html = format_flashcards_html(flashcards)
+            timestamps_html = generate_conceptual_timestamps(summary, segments) if segments else ""
+            if quizzes and isinstance(quizzes, list) and len(quizzes) > 0:
+                quiz_html = "<p>Select your answers and click Submit Quiz.</p>"
+                quiz_count = min(len(quizzes), MAX_QUESTIONS)
+                radios_updates = []
+                for i in range(MAX_QUESTIONS):
+                    if i < quiz_count:
+                        q = quizzes[i]
+                        radios_updates.append(gr.update(label=f"Q{i+1}: {q['question']}", choices=q["options"], visible=True))
+                    else:
+                        radios_updates.append(gr.update(visible=False))
+                submit_upd = gr.update(visible=True)
+                feedback_upd = gr.update(visible=True, value="")
             else:
-                flashcards_html = "<p>No flashcards generated.</p>"
+                quiz_html = "<p>No quizzes generated.</p>"
+                radios_updates = [gr.update(visible=False) for _ in range(MAX_QUESTIONS)]
+                submit_upd = gr.update(visible=False)
+                feedback_upd = gr.update(visible=False)
 
-            # Return updates
-            # Return the video_file as is (since it was working)
-            return video_file, summary, timestamps_html, quiz_html, flashcards_html
+            if flashcards and isinstance(flashcards, str) and flashcards.strip():
+                flashcards_markdown = format_flashcards_markdown(flashcards)
+            else:
+                flashcards_markdown = "No flashcards generated."
 
+            return (video_file, summary, timestamps_html, quiz_html, flashcards_markdown,
+                    *radios_updates, submit_upd, feedback_upd, quizzes if quizzes else [])
 
+        def grade_quizzes(*args):
+            *user_answers, quizzes = args
+            if not quizzes or not isinstance(quizzes, list) or len(quizzes) == 0:
+                return "No quizzes to grade."
 
+            result = []
+            for idx, q in enumerate(quizzes):
+                if idx >= MAX_QUESTIONS:
+                    break
+                user_ans = user_answers[idx]
+                correct = q["answer"]
+                if user_ans == correct:
+                    result.append(f"**Question {idx+1}**: Correct! ✅")
+                else:
+                    result.append(f"**Question {idx+1}**: Incorrect ❌ (Correct answer: {correct})")
 
+            return "\n".join(result)
+
+        # Connect the Transcribe button to the on_transcribe function
         transcribe_button.click(
             on_transcribe,
             inputs=[video_input],
-            outputs=[video_input, summary_output, timestamps_output, quiz_output, flashcards_output]
+            outputs=[video_input, summary_output, timestamps_output, quiz_output, flashcards_output] +
+                    quiz_radios + [submit_quiz_button, quiz_feedback, quizzes_state]
         )
 
-        # Attach the JS after the interface loads to handle timestamps and flashcards toggle
-        demo.load(js="""
-function my_func() {
-  // Handle timestamp links
-  const links = document.querySelectorAll(".timestamp-link");
-  links.forEach(link => {
-    link.addEventListener("click", e => {
-      e.preventDefault();
-      const time = parseFloat(e.currentTarget.getAttribute("data-time"));
-      const video = document.querySelector('#main_video_player video');
-      if (video && !isNaN(time)) {
-        video.currentTime = time;
-        video.play();
-      }
-    });
-  });
+        # Connect the Submit Quiz button to the grade_quizzes function
+        submit_quiz_button.click(
+            grade_quizzes,
+            inputs=quiz_radios + [quizzes_state],
+            outputs=quiz_feedback
+        )
 
-  // Handle flashcard show/hide answer
-  const flashcardButtons = document.querySelectorAll(".toggle-answer");
-  flashcardButtons.forEach(btn => {
-    btn.addEventListener("click", e => {
-      e.preventDefault();
-      const card = e.currentTarget.closest(".flashcard");
-      const back = card.querySelector(".back");
-      if (back.style.display === "none") {
-        back.style.display = "block";
-        e.currentTarget.textContent = "Hide Answer";
-      } else {
-        back.style.display = "none";
-        e.currentTarget.textContent = "Show Answer";
-      }
-    });
-  });
-}
-my_func();
-""")
+        demo.load()
 
     print("Launching Gradio interface...")
     demo.launch(allowed_paths=[VIDEO_DIR, AUDIO_DIR, TEXT_DIR], share=False)
-
 
 if __name__ == "__main__":
     main()

@@ -1,13 +1,16 @@
-Based on the following lecture transcription, generate a set of flashcards.
+Based on the following lecture transcription, generate a set of flashcards to help a student learn.
 
 Each flashcard should have:
-- A question or term on the front.
-- The answer or definition on the back.
+- A question or term on the front (this will be called "Front").
+- The answer or definition on the back (this will be called "Back").
+
+Do not produce any extra formatting like HTML or code blocks. Just produce a list of "Front: ..." and "Back: ...". Keep each card in consecutive lines, e.g.:
+
+Front: What is the imaginary unit 'i'?
+Back: It is the square root of -1.
+
+Front: Define a complex number.
+Back: A complex number has a real part and an imaginary part.
 
 Lecture Transcription:
-"{transcription_text}"
-
-Provide the flashcards in the following format:
-
-Front: [Question/Term]
-Back: [Answer/Definition]
+TRANSCRIPTION_HERE
