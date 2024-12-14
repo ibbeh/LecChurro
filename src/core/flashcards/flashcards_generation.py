@@ -1,5 +1,4 @@
 # src/core/flashcards/flashcards_generation.py
-
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -11,24 +10,15 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def generate_flashcards(transcription_text):
-    prompt = f"""
-    Based on the following lecture transcription, generate a set of flashcards.
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    prompt_file_path = os.path.join(current_dir, 'flashcards_prompt.txt')
+    with open(prompt_file_path, 'r', encoding='utf-8') as f:
+        prompt_template = f.read()
 
-    Each flashcard should have:
-    - A question or term on the front.
-    - The answer or definition on the back.
-
-    Lecture Transcription:
-    "{transcription_text}"
-
-    Provide the flashcards in the format:
-
-    Front: [Question/Term]
-    Back: [Answer/Definition]
-    """
+    prompt = prompt_template.format(transcription_text=transcription_text)
 
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o",
         messages=[
             {"role": "system", "content": "You are an AI assistant that creates flashcards to help students learn."},
             {"role": "user", "content": prompt}
@@ -36,5 +26,6 @@ def generate_flashcards(transcription_text):
         max_tokens=1000,
         temperature=0.7,
     )
-    flashcards = response.choices[0].message.content.strip()
-    return flashcards
+    flashcards_raw = response.choices[0].message.content.strip()
+
+    return flashcards_raw

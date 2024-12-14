@@ -1,0 +1,13 @@
+Based on the following lecture transcription, generate a set of flashcards.
+
+Each flashcard should have:
+- A question or term on the front.
+- The answer or definition on the back.
+
+Lecture Transcription:
+"{transcription_text}"
+
+Provide the flashcards in the following format:
+
+Front: [Question/Term]
+Back: [Answer/Definition]
