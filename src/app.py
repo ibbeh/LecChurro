@@ -20,10 +20,10 @@ load_dotenv()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-from .core.summaries import summarize_text
-from .core.quizzes import generate_quiz, grade_quizzes
-from .core.flashcards import generate_flashcards, format_flashcards_markdown
-from .core.timestamps import generate_conceptual_timestamps
+from core.summaries import summarize_text
+from core.quizzes import generate_quiz, grade_quizzes
+from core.flashcards import generate_flashcards, format_flashcards_markdown
+from core.timestamps import generate_conceptual_timestamps
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 DATA_DIR = os.path.join(ROOT_DIR, 'data')
