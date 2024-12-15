@@ -1,1 +1,0 @@
-python .\summarize_lecture_transcription.py .\summarization_prompt2.txt ..\..\..\data\text\Integration_by_completing_the_square.txt .\summaries\Integration_by_completing_the_square_summary.txt

@@ -20,10 +20,10 @@ load_dotenv()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-from core.summarization.summarize_text import summarize_text
-from core.quiz_generation.quiz_generation_transcription import generate_quiz
-from core.flashcards.flashcards_generation import generate_flashcards
-from core.timestamps.generate_conceptual_timestamps import generate_conceptual_timestamps
+from .core.summaries import summarize_text
+from .core.quizzes import generate_quiz, grade_quizzes
+from .core.flashcards import generate_flashcards, format_flashcards_markdown
+from .core.timestamps import generate_conceptual_timestamps
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 DATA_DIR = os.path.join(ROOT_DIR, 'data')
@@ -39,7 +39,7 @@ print("Loading Whisper model...")
 whisper_model = whisper.load_model("base")
 print("Whisper model loaded.")
 
-MAX_QUESTIONS = 50  # You can adjust this as needed
+MAX_QUESTIONS = 50
 
 def extract_audio(video_file_path, audio_file_path):
     print("Extracting audio with ffmpeg...")
@@ -123,82 +123,7 @@ def process_video(video_file):
 
     return video_path, summary, segments, quizzes, flashcards
 
-def format_timestamps(segments):
-    timestamps_data = []
-    for segment in segments:
-        start = segment["start"]
-        end = segment["end"]
-        text = segment["text"]
-        clickable_text = f"<a href='javascript:void(0);' onclick='seekVideo({start});'>{text}</a>"
-        timestamps_data.append({"Start Time": start, "End Time": end, "Text": clickable_text})
-    return timestamps_data
-
-def format_flashcards_markdown(flashcards_text):
-    # Parse the flashcards into Front and Back pairs
-    cards = flashcards_text.strip().split('\n')
-    flashcards_list = []
-    current_front = None
-    current_back = None
-
-    for line in cards:
-        line = line.strip()
-        if line.lower().startswith("front:"):
-            current_front = line[len("front:"):].strip()
-        elif line.lower().startswith("back:"):
-            current_back = line[len("back:"):].strip()
-            if current_front and current_back:
-                flashcards_list.append((current_front, current_back))
-                current_front = None
-                current_back = None
-
-    if not flashcards_list:
-        return "No flashcards generated."
-
-    # Create Markdown with <details> and <summary> for interactive flashcards
-    md = "## Flashcards\n\n"
-    for i, (front, back) in enumerate(flashcards_list, start=1):
-        md += f"""
-<details style="background-color: #f0f8ff; padding: 10px; border-radius: 5px;">
-<summary><span style="font-size: 20px; font-weight: bold; cursor: pointer;">Flashcard {i}:</span> <span style="font-size: 18px;">{front}</span></summary>
-
-<p style="font-size: 16px; margin-top: 10px;"><b>Answer:</b> {back}</p>
-
-</details>
-
-<br>
-"""
-    return md
-
-
-def main():
-    with gr.Blocks() as demo:
-        gr.Markdown("# LecChurro: From Lecture to Learning")
-
-        with gr.Row():
-            with gr.Column(scale=1):
-                video_input = gr.Video(label="Upload Lecture Video", elem_id="main_video_player")
-                transcribe_button = gr.Button("Transcribe Now")
-
-        with gr.Tabs():
-            with gr.Tab("Summary/Notes"):
-                summary_output = gr.Markdown(label="Summary/Notes")
-            with gr.Tab("Timestamps"):
-                timestamps_output = gr.HTML(label="Timestamps")
-            with gr.Tab("Quizzes"):
-                quiz_output = gr.HTML(label="Quizzes")
-                quiz_radios = []
-                for i in range(MAX_QUESTIONS):
-                    r = gr.Radio(choices=[], label=f"Q{i+1}", visible=False)
-                    quiz_radios.append(r)
-                submit_quiz_button = gr.Button("Submit Quiz", visible=False)
-                quiz_feedback = gr.Markdown("", visible=False)
-            with gr.Tab("Flashcards"):
-                # Use Markdown to display interactive flashcards
-                flashcards_output = gr.Markdown(label="Flashcards")
-
-        quizzes_state = gr.State()
-
-        def on_transcribe(video_file):
+def on_transcribe(video_file):
             if video_file is None:
                 return (gr.update(), "Please upload a video file.", "", "", "",
                         *([gr.update(visible=False)]*MAX_QUESTIONS),
@@ -256,23 +181,33 @@ def main():
             return (video_file, summary, timestamps_html, quiz_html, flashcards_markdown,
                     *radios_updates, submit_upd, feedback_upd, quizzes if quizzes else [])
 
-        def grade_quizzes(*args):
-            *user_answers, quizzes = args
-            if not quizzes or not isinstance(quizzes, list) or len(quizzes) == 0:
-                return "No quizzes to grade."
+def main():
+    with gr.Blocks() as demo:
+        gr.Markdown("# LecChurro: From Lecture to Learning")
 
-            result = []
-            for idx, q in enumerate(quizzes):
-                if idx >= MAX_QUESTIONS:
-                    break
-                user_ans = user_answers[idx]
-                correct = q["answer"]
-                if user_ans == correct:
-                    result.append(f"**Question {idx+1}**: Correct! ✅")
-                else:
-                    result.append(f"**Question {idx+1}**: Incorrect ❌ (Correct answer: {correct})")
+        with gr.Row():
+            with gr.Column(scale=1):
+                video_input = gr.Video(label="Upload Lecture Video", elem_id="main_video_player")
+                transcribe_button = gr.Button("Transcribe Now")
 
-            return "\n".join(result)
+        with gr.Tabs():
+            with gr.Tab("Summary/Notes"):
+                summary_output = gr.Markdown(label="Summary/Notes")
+            with gr.Tab("Timestamps"):
+                timestamps_output = gr.HTML(label="Timestamps")
+            with gr.Tab("Quizzes"):
+                quiz_output = gr.HTML(label="Quizzes")
+                quiz_radios = []
+                for i in range(MAX_QUESTIONS):
+                    r = gr.Radio(choices=[], label=f"Q{i+1}", visible=False)
+                    quiz_radios.append(r)
+                submit_quiz_button = gr.Button("Submit Quiz", visible=False)
+                quiz_feedback = gr.Markdown("", visible=False)
+            with gr.Tab("Flashcards"):
+                # Use Markdown to display interactive flashcards
+                flashcards_output = gr.Markdown(label="Flashcards")
+
+        quizzes_state = gr.State()
 
         # Connect the Transcribe button to the on_transcribe function
         transcribe_button.click(

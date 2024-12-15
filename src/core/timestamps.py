@@ -14,7 +14,7 @@ def generate_conceptual_timestamps(transcription, segments):
     segments_data = [{"start": s["start"], "end": s["end"], "text": s["text"].strip()} for s in segments]
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    prompt_file_path = os.path.join(current_dir, 'group_concepts_prompt.txt')
+    prompt_file_path = os.path.join(current_dir, 'prompts/group_concepts_prompt.txt')
     with open(prompt_file_path, 'r') as f:
         prompt_template = f.read()
 
@@ -64,3 +64,14 @@ def generate_conceptual_timestamps(transcription, segments):
         """
 
     return timestamps_html
+
+def format_timestamps(segments):
+    timestamps_data = []
+    for segment in segments:
+        start = segment["start"]
+        end = segment["end"]
+        text = segment["text"]
+        clickable_text = f"<a href='javascript:void(0);' onclick='seekVideo({start});'>{text}</a>"
+        timestamps_data.append({"Start Time": start, "End Time": end, "Text": clickable_text})
+    return timestamps_data
+

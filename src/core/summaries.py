@@ -35,7 +35,7 @@ def summarize_text(transcription, segments):
 
         # Construct the relative path for the prompt file
         current_dir = os.path.dirname(os.path.abspath(__file__))  # Get the directory of this script
-        prompt_file_path = os.path.join(current_dir, 'summarization_prompt2.txt')  # Combine directory with the file name
+        prompt_file_path = os.path.join(current_dir, 'prompts/summarization_prompt2.txt')  # Combine directory with the file name
 
         # Read the prompt from the file
         if not os.path.exists(prompt_file_path):
