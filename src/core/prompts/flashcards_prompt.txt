@@ -12,5 +12,22 @@ Back: It is the square root of -1.
 Front: Define a complex number.
 Back: A complex number has a real part and an imaginary part.
 
+Guidelines:
+1. Follow this format exactly: 
+   Front: [Question or Term]
+   Back: [Answer or Definition]
+   Example:
+   Front: What is the imaginary unit 'i'?
+   Back: It is the square root of -1.
+
+2. Keep each flashcard concise and to the point, avoiding overly long explanations.
+
+3. Focus only on the content provided in the lecture transcription. Do not include any additional commentary or information not found in the transcription.
+
+4. Generate approximately 10–20 flashcards (or as many as appropriate based on the transcription and length of the lecture content).
+
+5. If any part of the transcription is unclear or vague, skip it and focus on the clear content.
+
+
 Lecture Transcription:
 TRANSCRIPTION_HERE
